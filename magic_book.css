@@ -1,0 +1,520 @@
+/* ===========================================================================
+   THEME: MAGIC BOOK
+   A Logseq theme inspired by ancient grimoires and fantasy tomes.
+   Compatible with Logseq DB.
+
+   Required fonts (must be installed on the system):
+   - Cozette         Base body font. A small bitmap font, so the base size
+                     is set to 21px instead of Logseq's default 16px.
+   - Jacquard 12     Latin headings and page titles. Pixel-style.
+   - Gothixel Mono   Cyrillic headings and page titles. Pixel blackletter.
+
+   Structure
+   ---------
+    1. Font faces        @font-face, dual family for Latin + Cyrillic
+    2. Tokens            all colors and sizes, one source of truth
+    3. Base styles       body, app, blocks
+    4. Backgrounds       unified application chrome
+    5. Magic Book effect light-mode radial gradient
+    6. Page title        view + edit
+    7. Headings          view + edit
+    8. Reference fix     [[...]] nested headings
+    9. Left sidebar
+   10. Inline code, links, inputs
+   11. Block selection
+   12. Custom bullets
+   13. Table view
+
+   Tested on Logseq DB (desktop) on macOS. May need minor tweaks on
+   other platforms.
+   ============================================================================ */
+
+
+/* ============================================================================
+   1. FONT FACES
+   ============================================================================
+   'Magic Book Titles' is a virtual family: the browser picks Jacquard 12
+   for Latin codepoints and Gothixel Mono for Cyrillic codepoints, based
+   on unicode-range. Consumers only need to reference the family name.
+   ============================================================================ */
+
+@font-face {
+  font-family: 'Magic Book Titles';
+  src: local('Jacquard 12'), local('jacquard 12'),
+       local('Jacquard12-Regular'), local('Jacquard12');
+  font-weight: normal;
+  font-style: normal;
+  unicode-range:
+    U+0000-00FF, U+0100-017F, U+0180-024F, U+1E00-1EFF,
+    U+2000-206F, U+20A0-20CF, U+2100-214F, U+2190-21FF, U+2200-22FF;
+}
+
+@font-face {
+  font-family: 'Magic Book Titles';
+  src: local('Gothixel Mono'), local('gothixel mono'),
+       local('GothixelMono-Regular'), local('GothixelMono');
+  font-weight: normal;
+  font-style: normal;
+  unicode-range:
+    U+0400-04FF, U+0500-052F, U+2DE0-2DFF, U+A640-A69F, U+1C80-1C8F;
+}
+
+
+/* ============================================================================
+   2. TOKENS
+   ============================================================================
+   Every color and size is defined here once. Components below read these
+   tokens, never raw values, so retheming is a single edit per token.
+   ============================================================================ */
+
+/* --- Colors that differ per theme --- */
+html[data-theme="dark"] {
+  --mb-bg: #071404;
+  --mb-text: #57AD4A;
+  --mb-selection-bg: #1a331a;
+  --mb-selection-text: #7FDD70;
+  --mb-code-bg: rgba(87, 173, 74, 0.08);
+  --mb-input-bg: #0d1f0a;
+  --mb-link: #33bcf2;
+  --mb-tag: #e5c07b;
+  --mb-date: #56b6c2;
+  --mb-user-button-bg: #142a14;
+  --mb-line: rgba(87, 173, 74, 0.18);
+}
+
+html[data-theme="light"] {
+  --mb-bg: #f8f5ee;
+  --mb-text: #383a42;
+  --mb-selection-bg: #c9b896;
+  --mb-selection-text: #383a42;
+  --mb-code-bg: #ede7d5;
+  --mb-input-bg: #ede7d5;
+  --mb-link: #1d4ed8;
+  --mb-tag: #b45309;
+  --mb-date: #0e7490;
+  --mb-user-button-bg: #e8e0d0;
+  --mb-line: #e0d8c5;
+}
+
+/* --- Tokens shared by both themes --- */
+:root {
+  /* Fonts */
+  --mb-font-base: 'Cozette', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mb-font-heading: 'Magic Book Titles', sans-serif;
+
+  /* Sizes */
+  --mb-size-base: 21px;
+  --mb-size-sidebar: 19px;
+  --mb-size-title: 60px;
+
+  /* Sidebars follow the main background */
+  --mb-sidebar-bg: var(--mb-bg);
+
+  /* Page title */
+  --mb-title-color: #c678dd;
+
+  /* Heading sizes and colors */
+  --mb-h1-size: 2em;     --mb-h1-color: #33bcf2;
+  --mb-h2-size: 1.5em;   --mb-h2-color: #ff0000;
+  --mb-h3-size: 1.25em;  --mb-h3-color: #fc55fc;
+  --mb-h4-size: 1.15em;  --mb-h4-color: #e5c07b;
+  --mb-h5-size: 1em;     --mb-h5-color: #56b6c2;
+  --mb-h6-size: 0.9em;   --mb-h6-color: #abb2bf;
+
+  /* Table view row height (see section 13) */
+  --mb-row-height: 180px;
+}
+
+
+/* ============================================================================
+   3. BASE STYLES
+   ============================================================================ */
+
+body, .logseq-app, .block-content, .ls-block,
+button, input, select, textarea {
+  font-family: var(--mb-font-base) !important;
+  font-size: var(--mb-size-base) !important;
+  color: var(--mb-text) !important;
+}
+
+
+/* ============================================================================
+   4. BACKGROUNDS
+   ============================================================================ */
+
+/* Main content area */
+#main-container,
+#main-content-container {
+  background-color: var(--mb-bg) !important;
+}
+
+/* Top header bar and its nested containers */
+#head,
+.cp__header,
+.cp__header > div,
+.cp__header .l,
+.cp__header .r,
+.cp__header .flex.items-center,
+.cp__header .rttc-collaborators,
+.cp__header .cp__rtc-sync {
+  background-color: var(--mb-bg) !important;
+}
+
+/* Header buttons stay flat, except the user/avatar button which keeps a
+   subtle chip so it reads as an identity card. */
+#head .ui__button,
+.cp__header .ui__button {
+  background-color: transparent !important;
+}
+#head .ui__button:has(.ui__avatar),
+.cp__header .ui__button:has(.ui__avatar),
+.cp__header .rttc-collaborators {
+  background-color: var(--mb-user-button-bg) !important;
+  border-radius: 6px !important;
+}
+#head .ui__button:has(.ui__avatar):hover,
+.cp__header .ui__button:has(.ui__avatar):hover {
+  opacity: 0.85 !important;
+}
+
+/* Sidebars (left + right) follow the unified background */
+#left-sidebar,
+.left-sidebar-inner,
+#right-sidebar,
+.cp__right-sidebar-topbar,
+#right-sidebar .sidebar-content,
+#right-sidebar .sidebar-item,
+#right-sidebar .sidebar-item-content {
+  background-color: var(--mb-sidebar-bg) !important;
+}
+
+/* Blocks are transparent so the surface above shows through */
+.block-content,
+.ls-block {
+  background-color: transparent !important;
+}
+
+
+/* ============================================================================
+   5. MAGIC BOOK EFFECT (light mode only)
+   ============================================================================
+   A subtle radial gradient simulating warm candlelight on aged paper.
+   Uses an ellipse so it scales well on wide and ultra-wide screens.
+   ============================================================================ */
+
+html[data-theme="light"] #main-content-container {
+  background-image:
+    radial-gradient(ellipse at 50% 30%, #ffffff 0%, #f4ecd8 130%) !important;
+  box-shadow: inset 0 0 80px rgba(139, 109, 66, 0.06) !important;
+}
+
+
+/* ============================================================================
+   6. PAGE TITLE (view + edit)
+   ============================================================================
+   View: the title is inside .ls-page-title-container .block-title-wrap
+   Edit: Logseq swaps it for a <textarea> inside .ls-page-title-container,
+         with an inline height that must be overridden.
+   ============================================================================ */
+
+.ls-page-title-container .block-title-wrap,
+.ls-page-title-container .block-title-wrap *,
+h1.title,
+.ls-page-title h1 {
+  font-family: var(--mb-font-heading) !important;
+  font-size: var(--mb-size-title) !important;
+  color: var(--mb-title-color) !important;
+  line-height: 1.1 !important;
+}
+
+.ls-page-title-container textarea,
+.ls-page-title-container .uniline-block,
+.ls-page-title-container .editor-inner {
+  font-family: var(--mb-font-heading) !important;
+  font-size: var(--mb-size-title) !important;
+  color: var(--mb-title-color) !important;
+  line-height: 1.1 !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  height: auto !important;
+  min-height: 1.2em !important;
+  overflow: hidden !important;
+  resize: none !important;
+}
+
+/* Center the title block along with its emoji icon */
+.ls-page-title-container {
+  justify-content: center !important;
+}
+.block-main-content > .ls-page-icon {
+  align-self: center !important;
+}
+
+
+/* ============================================================================
+   7. HEADINGS (H1 - H6) — view + edit
+   ============================================================================
+   View mode uses <h1>…<h6>; edit mode uses .h1…​.h6 inside .editor-inner.
+   Both are styled together per level via the --mb-h*-size/color tokens.
+   ============================================================================ */
+
+h1, .block-content h1, .editor-inner .h1 {
+  font-family: var(--mb-font-heading) !important;
+  font-size: var(--mb-h1-size) !important;
+  color: var(--mb-h1-color) !important;
+}
+h2, .block-content h2, .editor-inner .h2 {
+  font-family: var(--mb-font-heading) !important;
+  font-size: var(--mb-h2-size) !important;
+  color: var(--mb-h2-color) !important;
+}
+h3, .block-content h3, .editor-inner .h3 {
+  font-family: var(--mb-font-heading) !important;
+  font-size: var(--mb-h3-size) !important;
+  color: var(--mb-h3-color) !important;
+}
+h4, .block-content h4, .editor-inner .h4 {
+  font-family: var(--mb-font-heading) !important;
+  font-size: var(--mb-h4-size) !important;
+  color: var(--mb-h4-color) !important;
+}
+h5, .block-content h5, .editor-inner .h5 {
+  font-family: var(--mb-font-heading) !important;
+  font-size: var(--mb-h5-size) !important;
+  color: var(--mb-h5-color) !important;
+}
+h6, .block-content h6, .editor-inner .h6 {
+  font-family: var(--mb-font-heading) !important;
+  font-size: var(--mb-h6-size) !important;
+  color: var(--mb-h6-color) !important;
+}
+
+
+/* ============================================================================
+   8. REFERENCE FIX: [[...]] INSIDE HEADINGS
+   ============================================================================
+   Logseq nests an <h1>…<h6> inside the preview of a link, which would
+   otherwise compound the heading size. Neutralize it so the link inherits
+   the surrounding heading's size, font and color.
+   ============================================================================ */
+
+.page-ref :is(h1, h2, h3, h4, h5, h6),
+.page-reference :is(h1, h2, h3, h4, h5, h6),
+.block-ref :is(h1, h2, h3, h4, h5, h6) {
+  font-size: 1em !important;
+  font-family: inherit !important;
+  color: inherit !important;
+  line-height: inherit !important;
+}
+.page-ref :is(h1, h2, h3, h4, h5, h6) *,
+.page-reference :is(h1, h2, h3, h4, h5, h6) *,
+.block-ref :is(h1, h2, h3, h4, h5, h6) * {
+  font-size: inherit !important;
+  font-family: inherit !important;
+  color: inherit !important;
+}
+
+
+/* ============================================================================
+   9. LEFT SIDEBAR
+   ============================================================================
+   Font size is controlled by --mb-size-sidebar. Cozette is small, so 19px
+   keeps it legible. If items get truncated with an ellipsis, either lower
+   the size or widen the sidebar in Logseq's settings.
+   ============================================================================ */
+
+#left-sidebar,
+#left-sidebar a,
+#left-sidebar strong,
+#left-sidebar .item,
+#left-sidebar .sidebar-header-container {
+  font-size: var(--mb-size-sidebar) !important;
+  color: var(--mb-text) !important;
+}
+
+#left-sidebar a *,
+#left-sidebar strong *,
+#left-sidebar .item * {
+  font-size: inherit !important;
+  color: inherit !important;
+}
+
+/* Hover state */
+#left-sidebar .item:hover,
+#left-sidebar a:hover {
+  background-color: var(--mb-selection-bg) !important;
+  border-radius: 4px !important;
+}
+
+/* Single-line items with ellipsis overflow */
+#left-sidebar a {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  height: 32px !important;
+  align-items: center !important;
+}
+#left-sidebar a .flex-1 {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 0 !important;
+}
+
+/* Protect SVG icons from being deformed or shrunk */
+#left-sidebar svg,
+#left-sidebar .ui__icon,
+#left-sidebar .ti {
+  width: 16px !important;
+  height: 16px !important;
+  font-size: initial !important;
+  flex-shrink: 0 !important;
+}
+
+
+/* ============================================================================
+  10. INLINE CODE, LINKS, INPUTS
+   ============================================================================ */
+
+/* Inline code (never the CodeMirror blocks: those keep Logseq's own theme) */
+code:not(pre code) {
+  font-family: 'Cozette', monospace !important;
+  background-color: var(--mb-code-bg) !important;
+  color: var(--mb-text) !important;
+  border: none !important;
+  border-radius: 3px !important;
+  padding: 1px 5px !important;
+}
+
+/* Blockquote */
+blockquote {
+  border-left: 3px solid var(--mb-text) !important;
+  padding-left: 12px !important;
+  color: var(--mb-text) !important;
+  opacity: 0.85 !important;
+}
+
+/* Horizontal rule */
+hr {
+  border-color: var(--mb-text) !important;
+  opacity: 0.3 !important;
+}
+
+/* External links */
+a, .block-content a, .external-link,
+a[href^="http"], .block-content a[href^="http"] {
+  color: var(--mb-link) !important;
+}
+a:hover, .block-content a:hover {
+  opacity: 0.8 !important;
+}
+
+/* Tags */
+a.tag, .block-content a.tag {
+  color: var(--mb-tag) !important;
+  background-color: transparent !important;
+}
+
+/* Dates and journal titles */
+.date, time, .block-content .date,
+.block-content time, .journal-title,
+a[href*="/page/"]:not(.page-ref) {
+  color: var(--mb-date) !important;
+}
+
+/* Form inputs (search, comments, properties) */
+input, textarea, .form-input, .ui__textarea {
+  background-color: var(--mb-input-bg) !important;
+  color: var(--mb-text) !important;
+  border: 1px solid var(--mb-code-bg) !important;
+  border-radius: 4px !important;
+}
+input::placeholder, textarea::placeholder {
+  color: var(--mb-text) !important;
+  opacity: 0.5 !important;
+}
+
+/* OVERRIDE: the block editor must have no background at all, otherwise
+   it looks "selected" while you type. This beats the input rule above. */
+html body .ls-block:has(.block-editor) textarea,
+html body .ls-block:has(.block-editor) .editor-wrapper,
+html body .ls-block:has(.block-editor) .block-editor,
+html body .ls-block:has(.block-editor) .editor-inner,
+html body .ls-block:has(.block-editor) .block-content-or-editor-inner {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+
+/* ============================================================================
+  11. BLOCK SELECTION
+   ============================================================================
+   Only blocks actually selected in multi-selection mode get the highlight,
+   never the block currently being edited (which also carries .selected).
+   ============================================================================ */
+
+html body .ls-block.selected:not(:has(.block-editor)),
+html body .ls-block.is-selected:not(:has(.block-editor)) {
+  background-color: var(--mb-selection-bg) !important;
+  border-radius: 4px !important;
+}
+html body .ls-block.selected:not(:has(.block-editor)) *,
+html body .ls-block.is-selected:not(:has(.block-editor)) * {
+  color: var(--mb-selection-text) !important;
+}
+
+
+/* ============================================================================
+  12. CUSTOM BULLETS
+   ============================================================================
+   Replaces the default circle with a character. Change the `content`
+   values to swap glyphs. Ideas: '✦' '❖' '✧' '†' '⌘' '◆' '○' '⬤' '▪' '☙'
+   ============================================================================ */
+
+.bullet {
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.bullet-container {
+  position: relative !important;
+  width: 16px !important;
+  height: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.bullet-container::before {
+  content: '☙';
+  font-family: 'Cozette', monospace !important;
+  color: var(--mb-text) !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  display: inline-block !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  pointer-events: none !important;
+}
+
+/* Collapsed blocks use the tag color */
+.bullet-link-wrap[data-state="closed"] .bullet-container::before {
+  content: '☙';
+  color: var(--mb-tag) !important;
+}
+
+/* Suppress the custom bullet when a block has its own icon */
+.is-with-icon .bullet-container::before {
+  display: none !important;
+}
+
+/* Suppress it inside ordered lists (numbers, letters, roman numerals) */
+.is-order-list .bullet-container::before {
+  display: none !important;
+}
